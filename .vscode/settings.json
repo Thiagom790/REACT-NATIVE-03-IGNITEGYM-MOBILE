@@ -1,0 +1,9 @@
+{
+    "cSpell.language": "en,pt-BR",
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/*.code-search": true,
+        "**/.yarn/cache": true,
+    }
+}
