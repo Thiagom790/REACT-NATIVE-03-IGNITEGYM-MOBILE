@@ -5,5 +5,9 @@
         "**/bower_components": true,
         "**/*.code-search": true,
         "**/.yarn/cache": true,
-    }
+    },
+    "cSpell.words": [
+        "Entypo",
+        "Pressable"
+    ]
 }
