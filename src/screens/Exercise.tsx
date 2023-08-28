@@ -38,7 +38,12 @@ export function Exercise() {
           justifyContent="space-between"
           alignItems="center"
         >
-          <Heading color="gray.100" fontSize="lg" flexShrink={1}>
+          <Heading
+            color="gray.100"
+            fontSize="lg"
+            flexShrink={1}
+            fontFamily="heading"
+          >
             Supino
           </Heading>
 
