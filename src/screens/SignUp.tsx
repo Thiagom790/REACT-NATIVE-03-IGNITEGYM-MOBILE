@@ -1,13 +1,25 @@
-import { VStack, Image, Text, Center, Heading, ScrollView } from "native-base";
+import {
+  VStack,
+  Image,
+  Text,
+  Center,
+  Heading,
+  ScrollView,
+  useToast,
+} from "native-base";
 import { useNavigation } from "@react-navigation/native";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { AppError } from "@utils/AppError";
+import { api } from "@services/api";
 
 import LogoSvg from "@assets/logo.svg";
 import BackgroundImg from "@assets/background.png";
 import { Input } from "@components/Input";
 import { Button } from "@components/Button";
 import { Controller, useForm } from "react-hook-form";
+import { useState } from "react";
+import { useAuth } from "@hooks/useAuth";
 
 type SignUpFormData = {
   name: string;
@@ -27,6 +39,9 @@ const signUpFormSchema = yup.object({
 });
 
 export function SignUp() {
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
+  const toast = useToast();
   const navigation = useNavigation();
   const {
     control,
@@ -40,8 +55,33 @@ export function SignUp() {
     navigation.goBack();
   }
 
-  function handleSignUp(formData: SignUpFormData) {
-    console.log({ formData });
+  async function handleSignUp({ email, name, password }: SignUpFormData) {
+    // localhost e ip 127.0.0.1 não funcionam no emulador
+    // precisa usar o ip da máquina
+    // const response = await fetch("http://192.168.100.6:3333/users", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     Accept: "application/json",
+    //   },
+    //   body: JSON.stringify({ email, name, password }),
+    // });
+    // const data = await response.json();
+    // console.log(data);
+
+    try {
+      setIsLoading(true);
+      await api.post("/users", { email, name, password });
+      await signIn(email, password);
+    } catch (error) {
+      setIsLoading(false);
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível criar a conta. Tente novamente mais tarde";
+
+      toast.show({ title, placement: "top", bgColor: "red.500" });
+    }
   }
 
   return (
@@ -128,6 +168,7 @@ export function SignUp() {
           <Button
             title="Criar e acessar"
             onPress={handleSubmit(handleSignUp)}
+            isLoading={isLoading}
           />
         </Center>
 
