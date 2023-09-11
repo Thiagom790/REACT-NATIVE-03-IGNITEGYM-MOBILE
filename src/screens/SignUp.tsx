@@ -48,7 +48,7 @@ export function SignUp() {
     handleSubmit,
     formState: { errors },
   } = useForm<SignUpFormData>({
-    resolver: yupResolver(signUpFormSchema),
+    resolver: yupResolver<any>(signUpFormSchema),
   });
 
   function handleGoBack() {
