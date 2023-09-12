@@ -20,6 +20,8 @@ import { Button } from "@components/Button";
 import { Controller, useForm } from "react-hook-form";
 import { useAuth } from "@hooks/useAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { api } from "@services/api";
+import { AppError } from "@utils/AppError";
 
 const PHOTO_SIZE = 33;
 
@@ -56,6 +58,7 @@ const profileSchema = yup.object({
 });
 
 export function Profile() {
+  const [isUpdating, setIsUpdating] = useState(false);
   const [photoIsLoading, setPhotoIsLoading] = useState(false);
   const [userPhoto, setUserPhoto] = useState(
     "https://github.com/thiagom790.png"
@@ -63,7 +66,7 @@ export function Profile() {
 
   const toast = useToast();
 
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const {
     control,
     handleSubmit,
@@ -77,7 +80,35 @@ export function Profile() {
   });
 
   async function handleProfileUpdate(values: ProfileFormData) {
-    console.log(values);
+    try {
+      setIsUpdating(true);
+
+      const userUpdated = user;
+      userUpdated.name = values.name;
+
+      await api.put("/users", values);
+
+      updateUserProfile(userUpdated);
+
+      toast.show({
+        title: "Perfil atualizado com sucesso",
+        placement: "top",
+        bgColor: "green.500",
+      });
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível atualizar os dados tente novamente mais tarde";
+
+      toast.show({
+        title,
+        placement: "top",
+        bgColor: "red.500",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   }
 
   async function handleUserPhotoSelect() {
@@ -236,6 +267,7 @@ export function Profile() {
             title="Atualizar"
             mt={6}
             onPress={handleSubmit(handleProfileUpdate)}
+            isLoading={isUpdating}
           />
         </Center>
       </ScrollView>
