@@ -23,6 +23,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { api } from "@services/api";
 import { AppError } from "@utils/AppError";
 
+import defaultUserPhotoImg from "@assets/userPhotoDefault.png";
+
 const PHOTO_SIZE = 33;
 
 const MAX_PHOTO_SIZE_3_MB = 3 * 1024 * 1024;
@@ -60,9 +62,6 @@ const profileSchema = yup.object({
 export function Profile() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [photoIsLoading, setPhotoIsLoading] = useState(false);
-  const [userPhoto, setUserPhoto] = useState(
-    "https://github.com/thiagom790.png"
-  );
 
   const toast = useToast();
 
@@ -132,8 +131,6 @@ export function Profile() {
       const photoUri = photoSelected.assets[0].uri;
       const photoInfo = await FileSystem.getInfoAsync(photoUri);
 
-      photoInfo.exists;
-
       if (photoInfo.exists && photoInfo.size > MAX_PHOTO_SIZE_3_MB) {
         return toast.show({
           title: "Essa imagem é muito grande. A imagem deve ter no máximo 3MB",
@@ -142,7 +139,38 @@ export function Profile() {
         });
       }
 
-      setUserPhoto(photoSelected.assets[0].uri);
+      const fileExtension = photoUri.split(".").pop();
+
+      const photoFile = {
+        name: `${user.name}.${fileExtension}`
+          .toLowerCase()
+          .replaceAll(" ", "_"),
+        uri: photoUri,
+        type: `${photoSelected.assets[0].type}/${fileExtension}`,
+      } as any;
+
+      const userPhotoUploadForm = new FormData();
+      userPhotoUploadForm.append("avatar", photoFile);
+
+      const avatarUpdatedResponse = await api.patch(
+        "/users/avatar",
+        userPhotoUploadForm,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      toast.show({
+        title: "Foto atualizada",
+        placement: "top",
+        bgColor: "green.500",
+      });
+
+      const userUpdated = user;
+      userUpdated.avatar = avatarUpdatedResponse.data.avatar;
+      updateUserProfile(userUpdated);
     } catch (error) {
       console.log(error);
     } finally {
@@ -158,7 +186,11 @@ export function Profile() {
         <Center mt={6} px={10}>
           {!photoIsLoading ? (
             <UserPhoto
-              source={{ uri: userPhoto }}
+              source={
+                user.avatar
+                  ? { uri: `${api.defaults.baseURL}/avatar/${user.avatar}` }
+                  : defaultUserPhotoImg
+              }
               alt="Foto do usuário"
               size={PHOTO_SIZE}
             />
